@@ -6,6 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
+# torch-scatter publishes no PyPI wheels, and its sdist imports torch at build
+# time — under pip's build isolation torch isn't present yet, so a from-source
+# build fails with "No module named 'torch'". Point pip at the PyG wheel index
+# so the prebuilt torch-scatter wheel is used instead of building. This mirrors
+# gridfm-graphkit's own CI (.github/workflows/ci-build.yaml).
+env:
+  PIP_FIND_LINKS: "https://data.pyg.org/whl/torch-2.12.0+cpu.html"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,11 +29,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package + test deps
-        # Installs gridfm-graphkit (from the git branch pinned in pyproject.toml)
-        # and this template, then the test extras.
+        # Pin torch to the newest release with prebuilt torch-scatter wheels on
+        # the PyG index (2.12.x). Newer torch (2.13+) has no torch-scatter wheel,
+        # so pip would fall back to the sdist build that fails under isolation.
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[test]"
+          python -m pip install --upgrade pip wheel "setuptools>=83.0.0"
+          pip install -e ".[test]" "torch==2.12.*"
+          TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
+          pip install torch-scatter -f "https://data.pyg.org/whl/torch-${TORCH_VERSION}+cpu.html"
 
       - name: Run hello-world tests
         run: pytest tests/ -v
