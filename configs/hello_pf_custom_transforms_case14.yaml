@@ -1,0 +1,63 @@
+# Same PowerFlow setup as hello_pf_case14.yaml, but instead of letting
+# `task.task_name` pick a whole transform composition, this config DECLARES the
+# transform pipeline explicitly via `data.transforms`. graphkit composes exactly
+# these, in order, resolving each from the registry (built-in or plugin).
+#
+# This is the "override the default list" path: entries are either a bare
+# registry name or a mapping with `name` + per-transform kwargs. Mix built-in
+# graphkit transforms with the template's own custom step (HelloNoOp is bundled
+# inside HelloWorldTransforms; to use a standalone custom transform, register it
+# by name and list it here too).
+#
+#   gridfm_graphkit train --config configs/hello_pf_custom_transforms_case14.yaml
+#
+# (No --plugins needed: the package auto-loads via its entry point once installed.)
+version: 1
+task:
+  task_name: PowerFlow          # still names the task module + physics decoder
+data:
+  baseMVA: 100
+  mask_value: 0.0
+  normalization: HeteroDataMVANormalizer
+  networks:
+  - case14_ieee
+  scenarios:
+  - 250000
+  test_ratio: 0.1
+  val_ratio: 0.1
+  # Explicit transform pipeline — overrides the default PowerFlow composition.
+  transforms:
+    - RemoveInactiveBranches
+    - RemoveInactiveGenerators
+    - name: AddPFHeteroMask       # mapping form: name + kwargs
+      mask_ref_vm: false
+    - ApplyMasking
+model:
+  type: HelloGridModel          # <-- plugin model
+  hidden_size: 32
+  input_bus_dim: 15
+  input_gen_dim: 6
+  output_bus_dim: 2
+  output_gen_dim: 1
+optimizer:
+  type: AdamW
+  learning_rate: 0.0005
+  scheduler_type: ReduceLROnPlateau
+  scheduler_params:
+    mode: min
+    factor: 0.7
+    patience: 5
+seed: 0
+training:
+  batch_size: 64
+  epochs: 5
+  losses:
+  - MaskedBusMSE
+  loss_weights:
+  - 1.0
+  loss_args:
+  - {}
+  accelerator: auto
+  devices: auto
+  strategy: auto
+verbose: true

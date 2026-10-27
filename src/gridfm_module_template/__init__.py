@@ -1,9 +1,12 @@
 """gridfm_module_template — a forkable hello-world plugin for gridfm-graphkit.
 
 Importing this package registers everything the plugin provides into graphkit's
-global registries (see ``model.py`` and ``transforms.py``). graphkit's
-``--plugins gridfm_module_template`` flag imports this package so the
-``@MODELS_REGISTRY.register`` / ``@TRANSFORM_REGISTRY.register`` decorators fire.
+global registries (see ``model.py`` and ``transforms.py``). graphkit auto-loads
+this package via the ``gridfm_graphkit.plugins`` entry point (declared in
+``pyproject.toml``), so just installing it fires the
+``@MODELS_REGISTRY.register`` / ``@TRANSFORM_REGISTRY.register`` decorators — no
+``--plugins`` flag required. (The ``--plugins gridfm_module_template`` flag still
+works for explicit loading.)
 
 To build your own module: fork this repo, rename the package, and replace the
 model/transform with your own. Keep the registration decorators — that is the

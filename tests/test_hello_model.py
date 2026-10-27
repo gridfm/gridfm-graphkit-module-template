@@ -97,5 +97,41 @@ def test_forward_returns_embeddings_when_requested():
     assert set(emb.keys()) == {"bus", "gen"}
 
 
+def test_config_declared_transform_list_builds():
+    """`data.transforms` in config composes exactly the listed transforms,
+    overriding the default task-name composition."""
+    from gridfm_graphkit.io.param_handler import get_task_transforms
+
+    args = NestedNamespace(
+        task={"task_name": "PowerFlow"},
+        data={
+            "mask_value": 0.0,
+            "transforms": [
+                "RemoveInactiveBranches",
+                "RemoveInactiveGenerators",
+                {"name": "AddPFHeteroMask", "mask_ref_vm": False},
+                "ApplyMasking",
+            ],
+        },
+    )
+    compose = get_task_transforms(args)
+    # PyG Compose stores its steps in `.transforms`; we declared four.
+    assert len(compose.transforms) == 4
+
+
+def test_default_composition_still_used_without_list():
+    """Absent `data.transforms`, graphkit falls back to the task-name
+    composition (backward compatible)."""
+    from gridfm_graphkit.io.param_handler import get_task_transforms
+
+    args = NestedNamespace(
+        task={"task_name": "PowerFlow"},
+        data={"mask_value": 0.0},  # no `transforms` key
+    )
+    compose = get_task_transforms(args)
+    # The built-in PowerFlow composition is a non-empty Compose.
+    assert len(compose.transforms) >= 1
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

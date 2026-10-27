@@ -11,8 +11,17 @@ itself**.
 |-------|------|---------------|
 | Custom model | `src/gridfm_module_template/model.py` | The minimal `nn.Module` contract graphkit expects, registered as `HelloGridModel`. |
 | Custom transform | `src/gridfm_module_template/transforms.py` | Registering your own transform composition (`HelloWorld`) that reuses graphkit's built-in preprocessing. |
-| Configs | `configs/*.yaml` | PF / OPF configs wiring the model to graphkit's existing PowerFlow / OptimalPowerFlow transforms, plus one using the custom transform. |
+| Configs | `configs/*.yaml` | PF / OPF configs wiring the model to graphkit's existing transforms, one using the custom transform composition, and one declaring an explicit transform list. |
 | Tests + CI | `tests/`, `.github/workflows/ci.yml` | Registration + instantiation + forward pass on a synthetic graph — no dataset needed. |
+
+### Configs at a glance
+
+| File | Shows |
+|------|-------|
+| `hello_pf_case14.yaml` | Model swap; reuse graphkit's built-in PowerFlow transforms by `task_name`. |
+| `hello_opf_case14.yaml` | Same for OptimalPowerFlow. |
+| `hello_se_case14.yaml` | Select the template's own registered transform composition (`HelloWorld`). |
+| `hello_pf_custom_transforms_case14.yaml` | **Declare the transform pipeline explicitly** via `data.transforms`, overriding the default composition. |
 
 ## The model contract
 
@@ -38,14 +47,32 @@ switch to a PyPI release once one exists).
 ## Run
 
 ```bash
-gridfm_graphkit train --config configs/hello_pf_case14.yaml \
-    --plugins gridfm_module_template
+gridfm_graphkit train --config configs/hello_pf_case14.yaml
 ```
 
-`--plugins gridfm_module_template` imports this package so its registration
-decorators fire. (Once graphkit adds a `gridfm_graphkit.plugins` entry-point
-scan, installing the package will be enough — the entry point is already
-declared in `pyproject.toml`.)
+No `--plugins` flag: graphkit auto-discovers this package through the
+`gridfm_graphkit.plugins` entry point (declared in `pyproject.toml`), so just
+having it installed registers the model + transforms. `--plugins
+gridfm_module_template` still works if you want to load it explicitly.
+
+### Declaring your own transform pipeline
+
+Instead of letting `task.task_name` select a whole transform composition, a
+config can list transforms explicitly — graphkit composes them in order,
+resolving each from the registry (built-in or plugin). Entries are a bare name
+or a `name` + kwargs mapping:
+
+```yaml
+data:
+  transforms:
+    - RemoveInactiveBranches
+    - name: AddPFHeteroMask
+      mask_ref_vm: false
+    - ApplyMasking
+```
+
+If `data.transforms` is omitted, graphkit falls back to the default composition
+for `task.task_name`. See `configs/hello_pf_custom_transforms_case14.yaml`.
 
 ## Test
 
