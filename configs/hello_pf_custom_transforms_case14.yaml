@@ -9,6 +9,14 @@
 # inside HelloWorldTransforms; to use a standalone custom transform, register it
 # by name and list it here too).
 #
+# IMPORTANT: the override only changes how the pipeline is ASSEMBLED — it does
+# NOT decouple the task from the data schema. The task selected by `task_name`
+# (PowerFlow here) still assumes the batch carries what its default pipeline
+# produces — notably the mask fields from Add*HeteroMask + ApplyMasking. Drop a
+# step the task needs and the data still loads but the task fails downstream.
+# The list below deliberately reproduces the default PowerFlow pipeline; add or
+# swap steps around these, don't remove the ones the task relies on.
+#
 #   gridfm_graphkit train --config configs/hello_pf_custom_transforms_case14.yaml
 #
 # (No --plugins needed: the package auto-loads via its entry point once installed.)
