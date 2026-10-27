@@ -1,0 +1,50 @@
+# StateEstimation-style config that selects the template's OWN registered
+# transform composition (`task.task_name: HelloWorld`) instead of a built-in.
+# This demonstrates the custom-transform half of the plugin: HelloWorldTransforms
+# reuses graphkit's preprocessing + PF masking and appends the custom HelloNoOp
+# step (see src/gridfm_module_template/transforms.py).
+#
+#   gridfm_graphkit train --config configs/hello_se_case14.yaml \
+#       --plugins gridfm_module_template
+#
+# NOTE: a brand-new task_name also needs a matching task module + physics
+# decoder registered to actually train. `HelloWorld` is registered only as a
+# TRANSFORM here, so this config is the canonical "how do I add a custom
+# transform" example — pair it with a registered task to run end-to-end.
+version: 1
+task:
+  task_name: HelloWorld          # <-- plugin transform composition
+data:
+  baseMVA: 100
+  mask_value: 0.0
+  normalization: HeteroDataMVANormalizer
+  networks:
+  - case14_ieee
+  scenarios:
+  - 250000
+  test_ratio: 0.1
+  val_ratio: 0.1
+model:
+  type: HelloGridModel          # <-- plugin model
+  hidden_size: 32
+  input_bus_dim: 15
+  input_gen_dim: 6
+  output_bus_dim: 2
+  output_gen_dim: 1
+optimizer:
+  type: AdamW
+  learning_rate: 0.0005
+seed: 0
+training:
+  batch_size: 64
+  epochs: 5
+  losses:
+  - MaskedBusMSE
+  loss_weights:
+  - 1.0
+  loss_args:
+  - {}
+  accelerator: auto
+  devices: auto
+  strategy: auto
+verbose: true

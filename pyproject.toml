@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gridfm-module-template"
+version = "0.1.0"
+description = "Hello-world template for building a 3rd-party gridfm-graphkit module (model + transform plugin)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    # graphkit is the host runtime. Pinned to the git branch for now; switch to a
+    # PyPI release (e.g. "gridfm-graphkit>=0.9") once one is published.
+    "gridfm-graphkit @ git+https://github.com/gridfm/gridfm-graphkit.git@main",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+# Auto-discovery entry point: when graphkit grows a `gridfm_graphkit.plugins`
+# scan, installing this package is enough to register the model + transform.
+# Until then, load explicitly with `--plugins gridfm_module_template`.
+[project.entry-points."gridfm_graphkit.plugins"]
+gridfm_module_template = "gridfm_module_template:register"
+
+[tool.setuptools.packages.find]
+where = ["src"]
