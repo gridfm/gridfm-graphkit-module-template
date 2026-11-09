@@ -10,11 +10,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 dependencies = [
-    # graphkit is the host runtime. Pinned to the latest RC release tag, which
+    # graphkit is the host runtime. Pinned to the latest PyPI release, which
     # carries the entry-point plugin auto-discovery + config transform-list
-    # support this template relies on. Bump to newer tags as they are cut, and
-    # switch to a PyPI release (e.g. "gridfm-graphkit>=0.9.1") once published.
-    "gridfm-graphkit @ git+https://github.com/gridfm/gridfm-graphkit.git@v0.9.1rc1",
+    # support this template relies on. This is a pre-release (RC); the exact
+    # `==` pin installs it without needing pip's --pre flag. Bump to the stable
+    # 0.9.1 (or a range like ">=0.9.1") once it is published.
+    "gridfm-graphkit==0.9.1rc1",
 ]
 
 [project.optional-dependencies]
